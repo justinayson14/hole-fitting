@@ -8,10 +8,55 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+typedef struct Block {
+    int id;
+    int start;
+    int end;
+    struct Block *next;
+} Block;
+
+typedef struct Allocated {
+    Block *head;
+    Block *tail;
+    int pm_size;
+} Allocated;
+
+Allocated *allocatedBlocks;
+
+void createAllocatedBlocks() {
+    int input;
+    printf("Enter the size of physical memory: ");
+    scanf("%d", &input);
+    while(getchar() != '\n');
+
+    allocatedBlocks = malloc(sizeof(Allocated));
+    allocatedBlocks->pm_size = input;
+    
+    Block *dummy = malloc(sizeof(Block));
+    dummy->start = 0;
+    dummy->end = 0;
+    dummy->id = -1;
+    dummy->next = NULL; 
+
+    allocatedBlocks->head = dummy;
+    allocatedBlocks->tail = dummy;
+    return;
+}
+
+void printAllocatedBlocks() {
+    Block *curr = allocatedBlocks->head;
+    printf("\nID\tStart\tEnd\n");
+    printf("-------------------\n");
+    while(curr != NULL) {
+        printf("%d\t%d\t%d\n", curr->id, curr->start, curr->end);
+        curr = curr->next;
+    }
+    return;
+}
+
 int main(int argc, char const *argv[]) {
     int input = 0;
-    do
-    {
+    do {
         printf("\nHole-fitting Algorithms\n");
         printf("-----------------------\n");
         printf("1) Enter parameters\n");
@@ -28,7 +73,7 @@ int main(int argc, char const *argv[]) {
 
         switch(input) {
             case 1:
-                printf("Enter params");
+                createAllocatedBlocks();
                 break;
             case 2:
                 printf("First-fit");
@@ -49,9 +94,6 @@ int main(int argc, char const *argv[]) {
                 printf("INVALID input, try again");
                 break;
         }
-
     } while(input != 6);
-    
-
-    return 0;
+    return 1;
 }
