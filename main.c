@@ -7,6 +7,7 @@
 */
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 typedef struct Block {
     int id;
@@ -75,6 +76,9 @@ void allocateFirstFit() {
         return;
     }
     Block *curr = allocatedBlocks->head;
+    int start = 0;
+    int end = 0;
+    int hole = 0;
     while(curr != NULL) {
         if(curr->id == id) {
             printf("\nINVALID: ID already exists\n");
@@ -84,7 +88,13 @@ void allocateFirstFit() {
     }
     curr = allocatedBlocks->head;
     while(curr != NULL) {
-        if((curr->next == NULL && initSize - curr->end >= size) || curr->next->start - curr->end >= size) {
+        start = curr->end;
+        if(curr->next != NULL)
+            end = curr->next->start;
+        else
+            end = allocatedBlocks->pm_size;
+        hole = abs(end - start);
+        if(hole >= size) {
             Block *newBlock = malloc(sizeof(Block));
             newBlock->id = id;
             newBlock->start = curr->end;
@@ -103,6 +113,75 @@ void allocateFirstFit() {
     return;
 }
 
+void allocateBestFit() {
+    int id = 0;
+    int size = 0;
+    printf("Enter block id: ");
+    scanf("%d",&id);
+    while(getchar() != '\n');
+    printf("Enter block size: ");
+    scanf("%d", &size);
+    while(getchar() != '\n');
+
+    if(size > allocatedBlocks->pm_size) {
+        printf("\nINVALID: Block size is larger than remaining memory!\n");
+        return;
+    }
+    if(allocatedBlocks->count == 0) {
+        Block *newBlock = malloc(sizeof(Block));
+        newBlock->id = 0;
+        newBlock->start = 0;
+        newBlock->end = size;
+        newBlock->next = NULL;
+
+        allocatedBlocks->head = newBlock;
+        allocatedBlocks->pm_size -= size;
+        allocatedBlocks->count++;
+        printAllocatedBlocks();
+        return;
+    }
+    Block *curr = allocatedBlocks->head;
+    Block *best = NULL;
+    int bestHole = __INT_MAX__;
+    int start = 0, end = 0, hole = 0;
+    while(curr != NULL) {
+        if(curr->id == id) {
+            printf("\nINVALID: ID already exists\n");
+            return;
+        }
+        curr = curr->next;
+    }
+    curr = allocatedBlocks->head;
+    while(curr != NULL) {
+        start = curr->end;
+        if(curr->next != NULL)
+            end = curr->next->start;
+        else
+            end = allocatedBlocks->pm_size;
+        hole = abs(end - start);
+        if(hole >= size && hole < bestHole) {
+            best = curr;
+            bestHole = hole;
+        }
+        curr = curr->next;
+    }
+    if(best != NULL) {
+        Block *newBlock = malloc(sizeof(Block));
+        newBlock->id = id;
+        newBlock->start = best->end;
+        newBlock->end = best->end + size;
+        newBlock->next = best->next;
+
+        best->next = newBlock;
+        allocatedBlocks->pm_size -= size;
+        allocatedBlocks->count++;
+        printAllocatedBlocks();
+        return;
+    }
+    printf("\nINVALID: No hole found large enough\n");
+    return;
+}
+
 int main(void) {
     int input = 0;
     do {
@@ -118,8 +197,6 @@ int main(void) {
         printf("\nEnter selection: ");
         scanf("%d", &input);
         while(getchar() != '\n');
-        printf("\n");
-
         switch(input) {
             case 1:
                 createAllocatedBlocks();
@@ -128,7 +205,7 @@ int main(void) {
                 allocateFirstFit();
                 break;
             case 3:
-                printf("Best-fit");
+                allocateBestFit();
                 break;
             case 4:
                 printf("Deallocate");
