@@ -1,3 +1,7 @@
+#ETC
+.vscode
+main
+
 # Prerequisites
 *.d
 

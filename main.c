@@ -86,17 +86,20 @@ void allocateFirstFit() {
     while(curr != NULL) {
         if((curr->next == NULL && initSize - curr->end >= size) || curr->next->start - curr->end >= size) {
             Block *newBlock = malloc(sizeof(Block));
+            newBlock->id = id;
             newBlock->start = curr->end;
             newBlock->end = curr->end + size;
             newBlock->next = curr->next;
 
             curr->next = newBlock;
             allocatedBlocks->pm_size -= size;
-            allocatedBlocks->count++;    
+            allocatedBlocks->count++;
+            printAllocatedBlocks();
+            return; 
         }
         curr = curr->next;
     }
-
+    printf("\nINVALID: No fitting hole\n");
     return;
 }
 
