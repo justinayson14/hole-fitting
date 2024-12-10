@@ -23,15 +23,15 @@ typedef struct Allocated {
 } Allocated;
 
 Allocated *allocatedBlocks;
-int initSize = 0;
 
 void createAllocatedBlocks() {
+    int size = 0;
     printf("Enter the size of physical memory: ");
-    scanf("%d", &initSize);
+    scanf("%d", &size);
     while(getchar() != '\n');
 
     allocatedBlocks = malloc(sizeof(Allocated));
-    allocatedBlocks->pm_size = initSize;
+    allocatedBlocks->pm_size = size;
     allocatedBlocks->count = 0;
     allocatedBlocks->head = NULL;
     return;
@@ -89,11 +89,12 @@ void allocateFirstFit() {
     curr = allocatedBlocks->head;
     while(curr != NULL) {
         start = curr->end;
-        if(curr->next != NULL)
+        if(curr->next != NULL) {
             end = curr->next->start;
+            hole = abs(end - start);
+        }
         else
-            end = allocatedBlocks->pm_size;
-        hole = abs(end - start);
+            hole = allocatedBlocks->pm_size;
         if(hole >= size) {
             Block *newBlock = malloc(sizeof(Block));
             newBlock->id = id;
@@ -154,11 +155,12 @@ void allocateBestFit() {
     curr = allocatedBlocks->head;
     while(curr != NULL) {
         start = curr->end;
-        if(curr->next != NULL)
+        if(curr->next != NULL) {
             end = curr->next->start;
+            hole = end - start;
+        }
         else
-            end = allocatedBlocks->pm_size;
-        hole = abs(end - start);
+            hole = allocatedBlocks->pm_size;
         if(hole >= size && hole < bestHole) {
             best = curr;
             bestHole = hole;
@@ -179,6 +181,28 @@ void allocateBestFit() {
         return;
     }
     printf("\nINVALID: No hole found large enough\n");
+    return;
+}
+
+void deallocateBlock() {
+    int id = 0;
+    Block *curr = allocatedBlocks->head;
+    Block *prev = NULL;
+    printf("Enter block id: ");
+    scanf("%d", &id);
+    while(curr != NULL && curr->id != id) {
+        prev = curr;
+        curr = curr->next;
+    }
+    if(curr == NULL) {
+        printf("\nINVALID: id not found\n");
+        return;
+    }
+    prev->next = curr->next;
+    allocatedBlocks->pm_size += curr->end - curr->start;
+    allocatedBlocks->count--;
+    free(curr);
+    printAllocatedBlocks();
     return;
 }
 
@@ -208,7 +232,7 @@ int main(void) {
                 allocateBestFit();
                 break;
             case 4:
-                printf("Deallocate");
+                deallocateBlock();
                 break;
             case 5:
                 printf("Defrag");
