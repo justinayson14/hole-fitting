@@ -17,29 +17,22 @@ typedef struct Block {
 
 typedef struct Allocated {
     Block *head;
-    Block *tail;
+    int count;
     int pm_size;
 } Allocated;
 
 Allocated *allocatedBlocks;
+int initSize = 0;
 
 void createAllocatedBlocks() {
-    int input;
     printf("Enter the size of physical memory: ");
-    scanf("%d", &input);
+    scanf("%d", &initSize);
     while(getchar() != '\n');
 
     allocatedBlocks = malloc(sizeof(Allocated));
-    allocatedBlocks->pm_size = input;
-    
-    Block *dummy = malloc(sizeof(Block));
-    dummy->start = 0;
-    dummy->end = 0;
-    dummy->id = -1;
-    dummy->next = NULL; 
-
-    allocatedBlocks->head = dummy;
-    allocatedBlocks->tail = dummy;
+    allocatedBlocks->pm_size = initSize;
+    allocatedBlocks->count = 0;
+    allocatedBlocks->head = NULL;
     return;
 }
 
@@ -54,7 +47,60 @@ void printAllocatedBlocks() {
     return;
 }
 
-int main(int argc, char const *argv[]) {
+void allocateFirstFit() {
+    int id = 0;
+    int size = 0;
+    printf("Enter block id: ");
+    scanf("%d", &id);
+    while(getchar() != '\n');
+    printf("Enter block size: ");
+    scanf("%d", &size);
+    while(getchar() != '\n');
+
+    if(size > allocatedBlocks->pm_size) {
+        printf("\nINVALID: Block size is larger than remaining memory!\n");
+        return;
+    }
+    if(allocatedBlocks->count == 0) {
+        Block *newBlock = malloc(sizeof(Block));
+        newBlock->id = 0;
+        newBlock->start = 0;
+        newBlock->end = size;
+        newBlock->next = NULL;
+
+        allocatedBlocks->head = newBlock;
+        allocatedBlocks->pm_size -= size;
+        allocatedBlocks->count++;
+        printAllocatedBlocks();
+        return;
+    }
+    Block *curr = allocatedBlocks->head;
+    while(curr != NULL) {
+        if(curr->id == id) {
+            printf("\nINVALID: ID already exists\n");
+            return;
+        }
+        curr = curr->next;
+    }
+    curr = allocatedBlocks->head;
+    while(curr != NULL) {
+        if((curr->next == NULL && initSize - curr->end >= size) || curr->next->start - curr->end >= size) {
+            Block *newBlock = malloc(sizeof(Block));
+            newBlock->start = curr->end;
+            newBlock->end = curr->end + size;
+            newBlock->next = curr->next;
+
+            curr->next = newBlock;
+            allocatedBlocks->pm_size -= size;
+            allocatedBlocks->count++;    
+        }
+        curr = curr->next;
+    }
+
+    return;
+}
+
+int main(void) {
     int input = 0;
     do {
         printf("\nHole-fitting Algorithms\n");
@@ -76,7 +122,7 @@ int main(int argc, char const *argv[]) {
                 createAllocatedBlocks();
                 break;
             case 2:
-                printf("First-fit");
+                allocateFirstFit();
                 break;
             case 3:
                 printf("Best-fit");
