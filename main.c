@@ -20,6 +20,7 @@ typedef struct Allocated {
     Block *head;
     int count;
     int pm_size;
+    int rightMostAddress;
 } Allocated;
 
 Allocated *allocatedBlocks;
@@ -32,6 +33,7 @@ void createAllocatedBlocks() {
 
     allocatedBlocks = malloc(sizeof(Allocated));
     allocatedBlocks->pm_size = size;
+    allocatedBlocks->rightMostAddress = size;
     allocatedBlocks->count = 0;
     allocatedBlocks->head = NULL;
     return;
@@ -89,12 +91,11 @@ void allocateFirstFit() {
     curr = allocatedBlocks->head;
     while(curr != NULL) {
         start = curr->end;
-        if(curr->next != NULL) {
+        if(curr->next != NULL)
             end = curr->next->start;
-            hole = abs(end - start);
-        }
         else
-            hole = allocatedBlocks->pm_size;
+            hole = allocatedBlocks->rightMostAddress;
+        hole = abs(end - start);
         if(hole >= size) {
             Block *newBlock = malloc(sizeof(Block));
             newBlock->id = id;
@@ -155,12 +156,11 @@ void allocateBestFit() {
     curr = allocatedBlocks->head;
     while(curr != NULL) {
         start = curr->end;
-        if(curr->next != NULL) {
+        if(curr->next != NULL)
             end = curr->next->start;
-            hole = end - start;
-        }
         else
-            hole = allocatedBlocks->pm_size;
+            end = allocatedBlocks->rightMostAddress;
+        hole = abs(end - start);
         if(hole >= size && hole < bestHole) {
             best = curr;
             bestHole = hole;
@@ -206,6 +206,30 @@ void deallocateBlock() {
     return;
 }
 
+void defragMemory() {
+    int prevStart = 0;
+    Block *curr = allocatedBlocks->head;
+    while(curr != NULL) {
+        curr->end = (curr->end - curr->start) + prevStart;
+        curr->start = prevStart;
+        prevStart = curr->end;
+        curr = curr->next;
+    }
+    printAllocatedBlocks();
+    return;
+}
+
+void quitProgram() {
+    printf("Quitting program...");
+    Block *curr = allocatedBlocks->head;
+    while(curr != NULL) {
+        Block *temp = curr;
+        curr = curr->next;
+        free(temp);
+    }
+    free(allocatedBlocks);
+}
+
 int main(void) {
     int input = 0;
     do {
@@ -235,10 +259,10 @@ int main(void) {
                 deallocateBlock();
                 break;
             case 5:
-                printf("Defrag");
+                defragMemory();
                 break;
             case 6:
-                printf("Quitting");
+                quitProgram();
                 break;
             default:
                 printf("INVALID input, try again");
